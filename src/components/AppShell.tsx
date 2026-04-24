@@ -22,13 +22,13 @@ interface Props {
 export function AppShell({ children }: Props) {
   const { activePage, setActivePage, theme, toastRef } = useApp();
 
-  const bgColor = theme === 'dark' ? '#0e0e12' : '#f2f2f5';
+  const bgColor = theme === 'dark' ? '#0e0e12' : 'var(--bg-light)';
   const navBg = theme === 'dark' ? 'rgba(26, 26, 30, 0.85)' : 'rgba(255, 255, 255, 0.85)';
   const borderColor = theme === 'dark' ? 'rgba(42, 42, 46, 0.5)' : 'rgba(216, 216, 219, 0.5)';
 
   return (
     <div
-      className="min-h-screen flex flex-col transition-colors duration-300"
+      className="min-h-[100dvh] flex flex-col transition-colors duration-300"
       style={{ 
         background: bgColor,
         paddingTop: 'env(safe-area-inset-top)',
@@ -48,16 +48,16 @@ export function AppShell({ children }: Props) {
       {/* Floating bottom navigation */}
       <div 
         className="fixed bottom-0 left-0 right-0 px-6 z-50 pointer-events-none"
-        style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom))' }}
+        style={{ 
+          paddingBottom: 'calc(12px + env(safe-area-inset-bottom))',
+          bottom: 0 
+        }}
       >
         <nav
-          className="max-w-md mx-auto flex items-center justify-around p-2 rounded-2xl backdrop-blur-xl pointer-events-auto transition-all"
+          className="max-w-md mx-auto flex items-center justify-around p-2 rounded-[2rem] glass pointer-events-auto transition-all shadow-2xl"
           style={{
-            background: navBg,
+            background: theme === 'dark' ? 'rgba(26, 26, 30, 0.7)' : 'rgba(255, 255, 255, 0.75)',
             border: `1px solid ${borderColor}`,
-            boxShadow: theme === 'dark' 
-              ? '0 10px 25px -5px rgba(0, 0, 0, 0.5)' 
-              : '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
           }}
         >
 
@@ -68,15 +68,16 @@ export function AppShell({ children }: Props) {
               : (theme === 'dark' ? '#535457' : '#afb0b3');
 
             return (
-              <button
+              <div
                 key={id}
                 onClick={() => setActivePage(id)}
-                className="flex-1 flex flex-col items-center gap-0.5 py-2 px-1 rounded-xl transition-all duration-200"
+                className="flex-1 flex flex-col items-center gap-0.5 py-2 px-1 rounded-xl transition-all duration-200 cursor-pointer"
                 style={{ 
                   background: isActive ? (theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)') : 'transparent'
                 }}
               >
                 <PButtonPure
+                  id={`nav-btn-${id}`}
                   icon={icon}
                   hideLabel
                   theme={theme}
@@ -104,7 +105,7 @@ export function AppShell({ children }: Props) {
                 >
                   {label}
                 </PText>
-              </button>
+              </div>
             );
           })}
         </nav>

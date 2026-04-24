@@ -3,7 +3,7 @@ import {
   PModal, PHeading, PButton, PText, PInlineNotification, PButtonPure
 } from '@porsche-design-system/components-react';
 import { useApp } from '../context/AppContext';
-import { recalcFoodEntry } from '../lib/calculations';
+import { recalcFoodEntry, formatNumber, formatMacro } from '../lib/calculations';
 import { storage } from '../lib/storage';
 import { COMMON_FOODS } from '../lib/foodLibrary';
 
@@ -161,7 +161,10 @@ export function AddFoodModal({ open, onDismiss, prefill }: Props) {
           <>
             {/* Search Input */}
             <div className="relative">
+              <label htmlFor="food-search" className="sr-only">Buscar alimento</label>
               <input
+                id="food-search"
+                name="food-search"
                 className={inputCls}
                 placeholder="Buscar alimento o agregar nuevo..."
                 value={search}
@@ -195,7 +198,7 @@ export function AddFoodModal({ open, onDismiss, prefill }: Props) {
                         <div className="flex-1">
                           <PText size="small" weight="semi-bold" theme={theme}>{f.name}</PText>
                           <PText size="xx-small" theme={theme} style={{ color: theme === 'dark' ? '#afb0b3' : '#535457' }}>
-                            {f.calories_per_serving} kcal · {f.protein_g}g P
+                            {formatNumber(f.calories_per_serving)} kcal · {formatNumber(f.protein_g, 1)}g P
                           </PText>
                         </div>
                         <PButtonPure icon="add" hideLabel theme={theme} />
@@ -231,7 +234,7 @@ export function AddFoodModal({ open, onDismiss, prefill }: Props) {
                         <div className="flex-1">
                           <PText size="small" weight="semi-bold" theme={theme}>{f.name}</PText>
                           <PText size="xx-small" theme={theme} style={{ color: theme === 'dark' ? '#afb0b3' : '#535457' }}>
-                            {f.calories_per_serving} kcal · {f.protein_g}g P
+                            {formatNumber(f.calories_per_serving)} kcal · {formatNumber(f.protein_g, 1)}g P
                           </PText>
                         </div>
                         <PButtonPure icon="add" hideLabel theme={theme} />
@@ -254,7 +257,7 @@ export function AddFoodModal({ open, onDismiss, prefill }: Props) {
                       >
                         <span className="text-2xl">{f.icon}</span>
                         <PText size="xx-small" weight="bold" theme={theme}>{f.name}</PText>
-                        <PText size="xx-small" theme={theme} style={{ color: theme === 'dark' ? '#afb0b3' : '#535457' }}>{f.calories_per_serving} kcal</PText>
+                        <PText size="xx-small" theme={theme} style={{ color: theme === 'dark' ? '#afb0b3' : '#535457' }}>{formatNumber(f.calories_per_serving)} kcal</PText>
                       </button>
                     ))}
                   </div>
@@ -271,8 +274,10 @@ export function AddFoodModal({ open, onDismiss, prefill }: Props) {
             {/* Name & Calories Main Card */}
             <div className="rounded-2xl p-4 flex flex-col gap-4 shadow-sm" style={{ background: surfaceColor, border: `1px solid ${borderColor}` }}>
               <div>
-                <label className={labelCls}>Nombre del alimento</label>
+                <label htmlFor="food-name" className={labelCls}>Nombre del alimento</label>
                 <input
+                  id="food-name"
+                  name="food-name"
                   className={inputCls}
                   placeholder="Ej: Avena..."
                   value={form.name}
@@ -281,8 +286,10 @@ export function AddFoodModal({ open, onDismiss, prefill }: Props) {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={labelCls}>Calorías/porción</label>
+                  <label htmlFor="cal-per-serving" className={labelCls}>Calorías/porción</label>
                   <input
+                    id="cal-per-serving"
+                    name="cal-per-serving"
                     className={inputCls}
                     type="number"
                     inputMode="decimal"
@@ -292,8 +299,10 @@ export function AddFoodModal({ open, onDismiss, prefill }: Props) {
                   />
                 </div>
                 <div>
-                  <label className={labelCls}>Gramos/porción</label>
+                  <label htmlFor="serving-size" className={labelCls}>Gramos/porción</label>
                   <input
+                    id="serving-size"
+                    name="serving-size"
                     className={inputCls}
                     type="number"
                     inputMode="numeric"
@@ -307,7 +316,7 @@ export function AddFoodModal({ open, onDismiss, prefill }: Props) {
 
             {/* Portions Quick Selection */}
             <div>
-              <label className={labelCls}>Porciones consumidas</label>
+              <label htmlFor="servings-consumed" className={labelCls}>Porciones consumidas</label>
               <div className="flex gap-2 mb-3 overflow-x-auto no-scrollbar">
                 {[0.5, 1, 1.5, 2].map(v => (
                   <button
@@ -325,6 +334,8 @@ export function AddFoodModal({ open, onDismiss, prefill }: Props) {
                 ))}
               </div>
               <input
+                id="servings-consumed"
+                name="servings-consumed"
                 className={inputCls}
                 type="number"
                 inputMode="decimal"
@@ -347,16 +358,16 @@ export function AddFoodModal({ open, onDismiss, prefill }: Props) {
             {showAdvanced && (
               <div className="grid grid-cols-3 gap-3 animate-in fade-in slide-in-from-top-2">
                 <div>
-                  <label className={labelCls}>Proteína (g)</label>
-                  <input className={inputCls} type="number" step="0.1" value={form.protein_per_serving} onChange={e => update('protein_per_serving', e.target.value)} />
+                  <label htmlFor="macro-p" className={labelCls}>Proteína (g)</label>
+                  <input id="macro-p" name="macro-p" className={inputCls} type="number" step="0.1" value={form.protein_per_serving} onChange={e => update('protein_per_serving', e.target.value)} />
                 </div>
                 <div>
-                  <label className={labelCls}>Carbos (g)</label>
-                  <input className={inputCls} type="number" step="0.1" value={form.carbs_per_serving} onChange={e => update('carbs_per_serving', e.target.value)} />
+                  <label htmlFor="macro-c" className={labelCls}>Carbos (g)</label>
+                  <input id="macro-c" name="macro-c" className={inputCls} type="number" step="0.1" value={form.carbs_per_serving} onChange={e => update('carbs_per_serving', e.target.value)} />
                 </div>
                 <div>
-                  <label className={labelCls}>Grasa (g)</label>
-                  <input className={inputCls} type="number" step="0.1" value={form.fat_per_serving} onChange={e => update('fat_per_serving', e.target.value)} />
+                  <label htmlFor="macro-f" className={labelCls}>Grasa (g)</label>
+                  <input id="macro-f" name="macro-f" className={inputCls} type="number" step="0.1" value={form.fat_per_serving} onChange={e => update('fat_per_serving', e.target.value)} />
                 </div>
               </div>
             )}
@@ -365,11 +376,11 @@ export function AddFoodModal({ open, onDismiss, prefill }: Props) {
             <div className="rounded-2xl p-4 flex items-center justify-between mt-2" style={{ background: '#018a16', color: '#fff' }}>
               <div>
                 <PText size="xx-small" weight="bold" style={{ color: 'rgba(255,255,255,0.7)' }}>TOTAL A REGISTRAR</PText>
-                <PText size="large" weight="bold" style={{ color: '#fff' }}>{totalCalConsumed} kcal</PText>
+                <PText size="large" weight="bold" style={{ color: '#fff' }}>{formatNumber(totalCalConsumed)} kcal</PText>
               </div>
               <div className="text-right">
                 <PText size="xx-small" weight="bold" style={{ color: 'rgba(255,255,255,0.7)' }}>PROTEÍNA</PText>
-                <PText size="medium" weight="bold" style={{ color: '#fff' }}>{computed.protein_g}g</PText>
+                <PText size="medium" weight="bold" style={{ color: '#fff' }}>{formatMacro(computed.protein_g)}</PText>
               </div>
             </div>
           </>
