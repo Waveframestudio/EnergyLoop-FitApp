@@ -30,7 +30,7 @@ export function AddExerciseModal({ open, onDismiss }: Props) {
 
   const weight = profile?.weight_kg ?? 70;
 
-  const recentExercises = useMemo(() => storage.getRecentExercises(4), [open]);
+  const recentExercises = useMemo(() => storage.getRecentExercises(4), []);
 
   const filteredTemplates = useMemo(() => {
     const s = search.toLowerCase();
@@ -43,10 +43,10 @@ export function AddExerciseModal({ open, onDismiss }: Props) {
   const selected = selectedIdx !== null ? filteredTemplates[selectedIdx] : null;
 
   const actualDuration = customDuration ? (parseInt(customDuration) || 0) : duration;
-  const met = selected ? getMET(selected as any, intensity) : 0;
+  const met = selected ? getMET(selected, intensity) : 0;
   const caloriesBurned = calcCaloriesBurned(met, weight, actualDuration);
 
-  function handleSelect(template: any) {
+  function handleSelect(template: { name: string; category: ExerciseEntry['category']; icon: string; metLow: number; metMedium: number; metHigh: number }) {
     const idx = filteredTemplates.findIndex(t => t.name === template.name);
     setSelectedIdx(idx >= 0 ? idx : null);
     setStep('details');

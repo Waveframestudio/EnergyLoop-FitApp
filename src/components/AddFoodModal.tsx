@@ -58,7 +58,7 @@ export function AddFoodModal({ open, onDismiss, prefill }: Props) {
     servings_consumed: String(prefill?.servings_consumed ?? '1'),
   });
 
-  const recentFoods = useMemo(() => storage.getRecentFoods(5), [open]);
+  const recentFoods = useMemo(() => storage.getRecentFoods(5), []);
   
   const filteredLibrary = useMemo(() => {
     if (!search) return [];
@@ -82,16 +82,18 @@ export function AddFoodModal({ open, onDismiss, prefill }: Props) {
     setError('');
   }
 
-  function handleSelectFromLibrary(item: any) {
+  function handleSelectFromLibrary(item: Record<string, unknown>) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const i = item as any; 
     setForm({
-      name: item.name,
-      calories_per_serving: String(item.calories_per_serving),
-      protein_per_serving: String(item.protein_g ?? 0),
-      carbs_per_serving: String(item.carbs_g ?? 0),
-      fat_per_serving: String(item.fat_g ?? 0),
-      sodium_per_serving: String(item.sodium_mg ?? 0),
-      serving_size_g: String(item.serving_size_g ?? 100),
-      servings_per_package: String(item.servings_per_package ?? 1),
+      name: String(i.name || ''),
+      calories_per_serving: String(i.calories_per_serving || 0),
+      protein_per_serving: String(i.protein_g ?? 0),
+      carbs_per_serving: String(i.carbs_g ?? 0),
+      fat_per_serving: String(i.fat_g ?? 0),
+      sodium_per_serving: String(i.sodium_mg ?? 0),
+      serving_size_g: String(i.serving_size_g ?? 100),
+      servings_per_package: String(i.servings_per_package ?? 1),
       servings_consumed: '1',
     });
     setStep('form');

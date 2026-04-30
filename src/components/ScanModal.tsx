@@ -25,7 +25,9 @@ async function analyzeImageWithGemini(file: File): Promise<ScannedNutrition> {
 
   const prompt = `
     Analyze this nutrition label image and extract the nutritional information. 
-    Return ONLY a JSON object with this exact structure:
+    IMPORTANT: Return ONLY a JSON object. No markdown, no preamble, no backticks.
+    
+    Structure:
     {
       "name": "Name of the food in Spanish",
       "calories_per_serving": number,
@@ -35,7 +37,7 @@ async function analyzeImageWithGemini(file: File): Promise<ScannedNutrition> {
       "sodium_mg": number,
       "serving_size_g": number,
       "servings_per_package": number,
-      "confidence": number (between 0 and 1, estimation of how clear the image is)
+      "confidence": number (between 0 and 1)
     }
     If a value is not found, use 0. If serving size is in ml, treat as g.
   `;
@@ -51,9 +53,17 @@ async function analyzeImageWithGemini(file: File): Promise<ScannedNutrition> {
   ]);
 
   const response = await result.response;
-  const text = response.text();
-  const jsonStr = text.match(/\{[\s\S]*\}/)?.[0] || text;
-  return JSON.parse(jsonStr);
+  const text = response.text().trim();
+  
+  try {
+    // Attempt to extract JSON if Gemini includes markdown or other text
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    const jsonStr = jsonMatch ? jsonMatch[0] : text;
+    return JSON.parse(jsonStr);
+  } catch {
+    console.error('Failed to parse Gemini response:', text);
+    throw new Error('No se pudo procesar la respuesta de la IA. Intentá con otra foto.');
+  }
 }
 
 interface Props {

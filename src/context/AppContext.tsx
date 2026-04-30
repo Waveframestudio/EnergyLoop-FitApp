@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import type { FoodEntry, ExerciseEntry, UserProfile, ActivePage } from '../lib/types';
 import { getDateString } from '../lib/calculations';
@@ -11,6 +11,7 @@ interface AppState {
   activePage: ActivePage;
   theme: 'light' | 'dark';
   loading: boolean;
+  refreshCount: number;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   toastRef: React.RefObject<any>;
   setActivePage: (page: ActivePage) => void;
@@ -38,34 +39,44 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const toastRef = useRef<any>(null);
 
-  useEffect(() => {
-    void init();
+  const [refreshCount, setRefreshCount] = useState(0);
+
+  const refreshToday = useCallback(async () => {
+    const today = getDateString();
+    const foods = storage.getFoods(today);
+    const exercises = storage.getExercises(today);
+    setTodayFoods([...foods]);
+    setTodayExercises([...exercises]);
+    setRefreshCount(prev => prev + 1);
   }, []);
 
-  async function init() {
+  const init = useCallback(async () => {
     setLoading(true);
     const p = storage.getProfile();
     setProfile(p);
     setTheme(p.theme);
-    document.documentElement.className = p.theme;
     await refreshToday();
     setLoading(false);
-  }
+  }, [refreshToday]);
 
-  async function refreshToday() {
-    const today = getDateString();
-    const foods = storage.getFoods(today);
-    const exercises = storage.getExercises(today);
-    setTodayFoods(foods);
-    setTodayExercises(exercises);
-  }
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void init();
+  }, [init]);
+
+  useEffect(() => {
+    try {
+      document.documentElement.className = theme;
+    } catch {
+      // ignore
+    }
+  }, [theme]);
 
   async function updateProfile(data: Partial<UserProfile>) {
     const updated = storage.updateProfile(data);
     setProfile(updated);
     if (data.theme) {
       setTheme(data.theme);
-      document.documentElement.className = data.theme;
     }
   }
 
@@ -75,8 +86,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }
 
   async function addFoodEntry(entry: Omit<FoodEntry, 'id' | 'created_at'>) {
-    storage.addFood(entry);
-    await refreshToday();
+    const newEntry = storage.addFood(entry);
+    setTodayFoods(prev => [newEntry, ...prev]);
+    setRefreshCount(prev => prev + 1);
     toast('Comida registrada');
   }
 
@@ -93,8 +105,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }
 
   async function addExerciseEntry(entry: Omit<ExerciseEntry, 'id' | 'created_at'>) {
-    storage.addExercise(entry);
-    await refreshToday();
+    const newEntry = storage.addExercise(entry);
+    setTodayExercises(prev => [newEntry, ...prev]);
+    setRefreshCount(prev => prev + 1);
     toast('Ejercicio registrado');
   }
 
@@ -116,7 +129,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   return (
     <AppContext.Provider value={{
-      profile, todayFoods, todayExercises, activePage, theme, loading, toastRef,
+      profile, todayFoods, todayExercises, activePage, theme, loading, toastRef, refreshCount,
       setActivePage, toggleTheme, refreshToday, updateProfile,
       addFoodEntry, updateFoodEntry, deleteFoodEntry,
       addExerciseEntry, updateExerciseEntry, deleteExerciseEntry,
@@ -127,6 +140,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useApp(): AppState {
   const ctx = useContext(AppContext);
   if (!ctx) throw new Error('useApp must be used inside AppProvider');

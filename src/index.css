@@ -59,7 +59,7 @@ body {
   scrollbar-width: none;
 }
 
-.dash-header, .dash-stats-card, .dash-action, .dash-section, .dash-item {
+.dash-header, .dash-stats-card, .dash-action, .dash-section {
   opacity: 0;
   transform: translateY(15px);
   will-change: transform, opacity;

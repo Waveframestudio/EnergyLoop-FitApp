@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo } from 'react';
-import { PHeading, PText, PDivider, PButtonPure } from '@porsche-design-system/components-react';
+import { PHeading, PText, PDivider, PButtonPure, PModal, PButton, PIcon } from '@porsche-design-system/components-react';
 import { useApp } from '../context/AppContext';
 import { CalorieRing } from '../components/CalorieRing';
 import { FoodCard } from '../components/FoodCard';
@@ -14,7 +14,7 @@ import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 
 export function Dashboard() {
-  const { profile, todayFoods, todayExercises, deleteFoodEntry, deleteExerciseEntry, theme } = useApp();
+  const { profile, todayFoods, todayExercises, theme, refreshCount } = useApp();
   const [modal, setModal] = useState<'none' | 'addFood' | 'scan' | 'addExercise' | 'setup'>('none');
   const [showAllFood, setShowAllFood] = useState(false);
   const [showAllExercise, setShowAllExercise] = useState(false);
@@ -26,13 +26,12 @@ export function Dashboard() {
       protein: acc.protein + f.protein_g,
       carbs: acc.carbs + f.carbs_g,
       fat: acc.fat + f.fat_g,
-      burned: acc.burned
-    }), { calories: 0, protein: 0, carbs: 0, fat: 0, burned: 0 });
-  }, [todayFoods]);
+    }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
+  }, [todayFoods, refreshCount]);
 
   const burned = useMemo(() => {
     return todayExercises.reduce((acc, e) => acc + e.calories_burned, 0);
-  }, [todayExercises]);
+  }, [todayExercises, refreshCount]);
 
   useGSAP(() => {
     const ctx = gsap.context(() => {
@@ -43,21 +42,21 @@ export function Dashboard() {
       gsap.fromTo('.dash-item', { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 0.5, delay: 0.4, stagger: 0.05, ease: 'power2.out' });
     }, containerRef);
     return () => ctx.revert();
-  }, { scope: containerRef });
+  }, { dependencies: [todayFoods, todayExercises], scope: containerRef });
 
   const goal = profile?.daily_calorie_goal || 0;
   const consumed = stats.calories;
   const net = consumed - burned;
   const remaining = goal - net;
   const overGoal = net > goal;
-  const isConfigured = goal > 0;
-
+  
   const protein = stats.protein;
   const carbs = stats.carbs;
   const fat = stats.fat;
 
+  const [showInfo, setShowInfo] = useState(false);
+
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Buenos días' : hour < 20 ? 'Buenas tardes' : 'Buenas noches';
   
   const surfaceColor = theme === 'dark' ? 'var(--surface-dark)' : 'var(--surface-light)';
   const borderColor = theme === 'dark' ? 'var(--border-dark)' : 'var(--border-light)';
@@ -93,49 +92,59 @@ export function Dashboard() {
           border: `1px solid ${borderColor}`,
         }}
       >
+        {/* Industry Standard Equation: Goal - Food + Exercise = Remaining */}
+        <div className="w-full relative">
+          <button 
+            onClick={() => setShowInfo(true)}
+            className="absolute -top-1 -right-1 w-7 h-7 rounded-full bg-current opacity-10 flex items-center justify-center hover:opacity-20 transition-all active:scale-90"
+            title="Cómo funciona"
+          >
+            <PIcon name="question" size="inherit" theme={theme} color="primary" style={{ width: '14px', height: '14px' }} />
+          </button>
+
+          <div className="w-full flex justify-between items-center px-4 mb-2">
+            <div className="flex flex-col items-center">
+              <PText size="xx-small" theme={theme} style={{ color: secondaryText, fontWeight: 700, letterSpacing: '0.1em' }}>OBJETIVO</PText>
+              <PText size="small" weight="bold" theme={theme}>{goal}</PText>
+            </div>
+            <PText size="small" theme={theme} style={{ opacity: 0.3 }}>-</PText>
+            <div className="flex flex-col items-center">
+              <PText size="xx-small" theme={theme} style={{ color: secondaryText, fontWeight: 700, letterSpacing: '0.1em' }}>ALIMENTOS</PText>
+              <PText size="small" weight="bold" theme={theme}>{consumed}</PText>
+            </div>
+            <PText size="small" theme={theme} style={{ opacity: 0.3 }}>+</PText>
+            <div className="flex flex-col items-center">
+              <PText size="xx-small" theme={theme} style={{ color: secondaryText, fontWeight: 700, letterSpacing: '0.1em' }}>EJERCICIO</PText>
+              <PText size="small" weight="bold" theme={theme} style={{ color: '#018a16' }}>{burned}</PText>
+            </div>
+            <PText size="small" theme={theme} style={{ opacity: 0.3 }}>=</PText>
+            <div className="flex flex-col items-center">
+              <PText size="xx-small" theme={theme} style={{ color: secondaryText, fontWeight: 700, letterSpacing: '0.1em' }}>RESTANTES</PText>
+              <PText size="small" weight="bold" theme={theme} style={{ color: remaining < 0 ? '#e60019' : '#018a16' }}>
+                {Math.abs(remaining)}
+              </PText>
+            </div>
+          </div>
+        </div>
+
         <CalorieRing consumed={consumed} burned={burned} goal={goal} theme={theme} />
 
-        <div className="w-full flex flex-col gap-4">
-          <div className="flex items-center justify-between px-2">
-            <div className="text-center">
-              <PText size="xx-small" theme={theme} style={{ color: secondaryText, marginBottom: 4 }}>CONSUMIDAS</PText>
-              <div style={{ fontSize: 22, fontWeight: 800, color: theme === 'dark' ? '#fbfcff' : '#010205' }}>
-                <CountUp value={consumed} />
-              </div>
-            </div>
-            <div className="h-8 w-px bg-current opacity-10" />
-            <div className="text-center">
-              <PText size="xx-small" theme={theme} style={{ color: secondaryText, marginBottom: 4 }}>QUEMADAS</PText>
-              <div style={{ fontSize: 22, fontWeight: 800, color: '#018a16' }}>
-                <CountUp value={burned} />
-              </div>
-            </div>
-            <div className="h-8 w-px bg-current opacity-10" />
-            <div className="text-center">
-              <PText size="xx-small" theme={theme} style={{ color: secondaryText, marginBottom: 4 }}>RESTANTES</PText>
-              <div style={{ fontSize: 22, fontWeight: 800, color: remaining < 0 ? '#e00000' : '#ff6b00' }}>
-                <CountUp value={Math.abs(remaining)} />
-              </div>
-            </div>
-          </div>
+        <PDivider theme={theme} style={{ margin: '16px 0' }} />
 
-          <PDivider theme={theme} />
-
-          <div>
-             <div className="flex justify-between items-center mb-2">
-                <PText size="xx-small" weight="semi-bold" theme={theme}>MACRONUTRIENTES</PText>
-                <PText size="xx-small" theme={theme} style={{ color: secondaryText }}>
-                  <CountUp value={protein} decimals={1} />g P · <CountUp value={carbs} decimals={1} />g C · <CountUp value={fat} decimals={1} />g G
-                </PText>
-             </div>
-             <MacroBar
-                protein={protein}
-                carbs={carbs}
-                fat={fat}
-                proteinGoal={profile?.daily_protein_goal ?? undefined}
-                theme={theme}
-              />
+        <div className="w-full">
+          <div className="flex justify-between items-center mb-2">
+            <PText size="xx-small" weight="bold" theme={theme} style={{ letterSpacing: '0.05em' }}>MACRONUTRIENTES</PText>
+            <PText size="xx-small" theme={theme} style={{ color: secondaryText }}>
+              <CountUp value={protein} decimals={1} />g P · <CountUp value={carbs} decimals={1} />g C · <CountUp value={fat} decimals={1} />g G
+            </PText>
           </div>
+          <MacroBar
+            protein={protein}
+            carbs={carbs}
+            fat={fat}
+            proteinGoal={profile?.daily_protein_goal ?? undefined}
+            theme={theme}
+          />
         </div>
       </div>
 
@@ -313,6 +322,51 @@ export function Dashboard() {
       <AddFoodModal open={modal === 'addFood'} onDismiss={() => setModal('none')} />
       <ScanModal open={modal === 'scan'} onDismiss={() => setModal('none')} theme={theme} />
       <AddExerciseModal open={modal === 'addExercise'} onDismiss={() => setModal('none')} />
+      
+      {/* Logic Info Modal */}
+      <PModal 
+        open={showInfo} 
+        onDismiss={() => setShowInfo(false)} 
+        heading="Cómo funciona CalorAPP" 
+        theme={theme}
+        aria={{ 'aria-label': 'Información de metodología' }}
+      >
+        <div className="flex flex-col gap-6 p-2">
+          <div className="p-5 rounded-3xl bg-[#018a1611] border border-[#018a1622]">
+            <PHeading size="small" theme={theme} style={{ color: '#018a16', marginBottom: 8 }}>💳 Tu Billetera de Energía</PHeading>
+            <PText size="small" theme={theme}>
+              Imagina que empiezas el día con un <b>presupuesto</b> (ej: 2000 kcal). Es el "dinero" que tienes para gastar en comida.
+            </PText>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 rounded-3xl bg-current opacity-5 flex flex-col gap-2">
+              <PText weight="bold" theme={theme}>🍎 Alimentos</PText>
+              <PText size="x-small" theme={theme}>Cada vez que comes, <b>gastas</b> tu presupuesto. El número de restantes <b>baja</b>.</PText>
+            </div>
+            <div className="p-4 rounded-3xl bg-current opacity-5 flex flex-col gap-2">
+              <PText weight="bold" theme={theme} style={{ color: '#018a16' }}>💪 Ejercicio</PText>
+              <PText size="x-small" theme={theme}>Al entrenar, <b>ganas un bono</b>. El número de restantes <b>sube</b>.</PText>
+            </div>
+          </div>
+
+          <div className="p-5 rounded-3xl border border-current opacity-100" style={{ borderColor: borderColor }}>
+            <PHeading size="x-small" theme={theme} style={{ marginBottom: 4 }}>🎯 El Objetivo</PHeading>
+            <PText size="small" theme={theme}>
+              Tu meta es llegar a <b>0</b> al final del día. Si llegas a 0, habrás cumplido tu plan nutricional a la perfección.
+            </PText>
+          </div>
+
+          <PButton 
+            variant="primary" 
+            theme={theme} 
+            onClick={() => setShowInfo(false)}
+            style={{ marginTop: 12 }}
+          >
+            ¡Entendido!
+          </PButton>
+        </div>
+      </PModal>
     </div>
   );
 }

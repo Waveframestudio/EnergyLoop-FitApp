@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { PModal, PHeading, PText, PButton, PDivider } from '@porsche-design-system/components-react';
+import { PModal, PHeading, PText, PButton } from '@porsche-design-system/components-react';
 import { useApp } from '../context/AppContext';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -198,7 +198,7 @@ export function SetupModal({ open, onDismiss }: Props) {
             ].map(o => (
               <button 
                 key={o.val}
-                onClick={() => setObjective(o.val as any)}
+                onClick={() => setObjective(o.val as 'lose' | 'maintain' | 'gain')}
                 className={`p-4 rounded-2xl border-2 text-left flex items-center gap-4 transition-all ${objective === o.val ? 'border-[#018a16] bg-[#018a1611]' : 'border-transparent'}`}
                 style={{ background: objective === o.val ? undefined : surfaceColor, borderColor: objective === o.val ? undefined : borderColor }}
               >

@@ -51,7 +51,7 @@ function AppContent() {
       <div ref={pageRef}>
         {activePage === 'dashboard' && <Dashboard />}
         {activePage === 'history' && <History />}
-        {activePage === 'settings' && <Settings onOpenSetup={() => setShowGlobalSetup(true)} />}
+        {activePage === 'settings' && <Settings key={profile?.id || 'loading'} onOpenSetup={() => setShowGlobalSetup(true)} />}
       </div>
       
       {/* Global Setup Modal */}

@@ -1,7 +1,6 @@
-import { useEffect, useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { PHeading, PText, PButton, PSwitch, PDivider, PInlineNotification, PButtonPure } from '@porsche-design-system/components-react';
 import { useApp } from '../context/AppContext';
-import { SetupModal } from '../components/SetupModal';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 
@@ -28,15 +27,6 @@ export function Settings({ onOpenSetup }: { onOpenSetup?: () => void }) {
     return () => ctx.revert();
   }, { scope: containerRef });
 
-  useEffect(() => {
-    if (profile) {
-      setCalorieGoal(String(profile.daily_calorie_goal));
-      setProteinGoal(profile.daily_protein_goal ? String(profile.daily_protein_goal) : '');
-      setWeight(String(profile.weight_kg));
-      setName(profile.name || 'Usuario');
-      setAvatar(profile.avatar || null);
-    }
-  }, [profile]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

@@ -1,22 +1,20 @@
 import { useEffect, useState, useRef } from 'react';
-import { PHeading, PText, PSpinner, PButtonPure, PTag } from '@porsche-design-system/components-react';
+import { PHeading, PText, PSpinner, PTag } from '@porsche-design-system/components-react';
 import { useApp } from '../context/AppContext';
 import type { DayStats } from '../lib/types';
 import { getLast7Days, getDateString } from '../lib/calculations';
 import { storage } from '../lib/storage';
+import { useMemo } from 'react';
 import { WeeklyChart } from '../components/WeeklyChart';
 import { FoodCard } from '../components/FoodCard';
 import { ExerciseCard } from '../components/ExerciseCard';
-import type { FoodEntry, ExerciseEntry } from '../lib/types';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 
 export function History() {
-  const { profile, theme } = useApp();
+  const { profile, theme, todayFoods, todayExercises } = useApp();
   const [weekStats, setWeekStats] = useState<DayStats[]>([]);
   const [selectedDate, setSelectedDate] = useState(getDateString());
-  const [dayFoods, setDayFoods] = useState<FoodEntry[]>([]);
-  const [dayExercises, setDayExercises] = useState<ExerciseEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'foods' | 'exercises'>('foods');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -33,44 +31,43 @@ export function History() {
   }, { dependencies: [loading], scope: containerRef });
 
   useEffect(() => {
-    void loadData();
-  }, []);
+    let ignore = false;
+    async function init() {
+      setLoading(true);
+      
+      const days = getLast7Days();
+      const allFoods = storage.getFoods();
+      const allExercises = storage.getExercises();
+      
+      const stats: DayStats[] = days.map(date => {
+        const dayFoods = allFoods.filter(f => f.logged_at.startsWith(date));
+        const dayExercises = allExercises.filter(e => e.logged_at.startsWith(date));
+        
+        const consumed = dayFoods.reduce((sum, f) => sum + f.calories, 0);
+        const burned = dayExercises.reduce((sum, e) => sum + e.calories_burned, 0);
+        
+        return {
+          date,
+          calories_consumed: consumed,
+          calories_burned: burned,
+          net_calories: consumed - burned,
+          protein_g: dayFoods.reduce((sum, f) => sum + f.protein_g, 0),
+          carbs_g: dayFoods.reduce((sum, f) => sum + f.carbs_g, 0),
+          fat_g: dayFoods.reduce((sum, f) => sum + f.fat_g, 0),
+        };
+      });
 
-  useEffect(() => {
-    void loadDayDetail(selectedDate);
-  }, [selectedDate]);
+      if (!ignore) {
+        setWeekStats(stats);
+        setLoading(false);
+      }
+    }
+    void init();
+    return () => { ignore = true; };
+  }, [todayFoods, todayExercises]);
 
-  async function loadData() {
-    setLoading(true);
-    await new Promise(r => setTimeout(r, 400));
-    
-    const days = getLast7Days();
-    const statsMap = storage.getStatsByRange(7);
-    
-    const stats: DayStats[] = days.map(date => {
-      const s = statsMap[date] || { consumed: 0, burned: 0, protein: 0 };
-      const foods = storage.getFoods(date);
-      return {
-        date,
-        calories_consumed: s.consumed,
-        calories_burned: s.burned,
-        net_calories: s.consumed - s.burned,
-        protein_g: s.protein,
-        carbs_g: foods.reduce((sum, f) => sum + f.carbs_g, 0),
-        fat_g: foods.reduce((sum, f) => sum + f.fat_g, 0),
-      };
-    });
-
-    setWeekStats(stats);
-    setLoading(false);
-  }
-
-  async function loadDayDetail(date: string) {
-    const foods = storage.getFoods(date);
-    const exercises = storage.getExercises(date);
-    setDayFoods(foods);
-    setDayExercises(exercises);
-  }
+  const dayFoods = useMemo(() => storage.getFoods(selectedDate), [selectedDate, todayFoods]);
+  const dayExercises = useMemo(() => storage.getExercises(selectedDate), [selectedDate, todayExercises]);
 
   const surfaceColor = theme === 'dark' ? 'var(--surface-dark)' : 'var(--surface-light)';
   const borderColor = theme === 'dark' ? 'var(--border-dark)' : 'var(--border-light)';

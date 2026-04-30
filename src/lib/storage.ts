@@ -1,5 +1,4 @@
 import type { FoodEntry, ExerciseEntry, UserProfile } from './types';
-import { getDateString } from './calculations';
 
 const KEYS = {
   PROFILE: 'calorapp_profile',
@@ -118,33 +117,4 @@ export const storage = {
     return recent;
   },
 
-  getStatsByRange: (days: number = 7) => {
-    const foods = storage.getFoods();
-    const exercises = storage.getExercises();
-    const stats: Record<string, { consumed: number; burned: number; protein: number }> = {};
-
-    for (let i = 0; i < days; i++) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dateStr = getDateString(d);
-      stats[dateStr] = { consumed: 0, burned: 0, protein: 0 };
-    }
-
-    foods.forEach(f => {
-      const date = f.logged_at.split('T')[0];
-      if (stats[date]) {
-        stats[date].consumed += f.calories;
-        stats[date].protein += f.protein_g;
-      }
-    });
-
-    exercises.forEach(e => {
-      const date = e.logged_at.split('T')[0];
-      if (stats[date]) {
-        stats[date].burned += e.calories_burned;
-      }
-    });
-
-    return stats;
-  }
 };
