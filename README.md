@@ -15,7 +15,7 @@
     <img src="https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
     <img src="https://img.shields.io/badge/vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
     <img src="https://img.shields.io/badge/Gemini_AI-Google-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white" alt="Gemini AI" />
-    <img src="https://img.shields.io/badge/Supabase-Database-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
+    <img src="https://img.shields.io/badge/Supabase-%233ECF8E.svg?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
     <img src="https://img.shields.io/badge/Porsche_Design-System-000000?style=for-the-badge&logo=porsche&logoColor=white" alt="Porsche Design" />
   </div>
 
